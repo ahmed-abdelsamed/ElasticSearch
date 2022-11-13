@@ -1,0 +1,82 @@
+yum install java
+ssh passwordless between all nodes
+register all nodes in hosts file
+els-1$ vi /etc/hosts
+'
+172.16.16.101 escluster.home.lab escluster
+172.16.16.101 els-1 els-1.home.lab
+172.16.16.102 els-2 els-2.home.lab
+172.16.16.103 els-3 els-3.home.lab
+'
+els-2$ vi /etc/hosts
+'
+172.16.16.102 escluster.home.lab escluster
+172.16.16.101 els-1 els-1.home.lab
+172.16.16.102 els-2 els-2.home.lab
+172.16.16.103 els-3 els-3.home.lab
+'
+els-3$ vi /etc/hosts
+'
+172.16.16.103 escluster.home.lab escluster
+172.16.16.101 els-1 els-1.home.lab
+172.16.16.102 els-2 els-2.home.lab
+172.16.16.103 els-3 els-3.home.lab
+'
+
+Disable firewalld and selinux
+
+----------------------------Install elastcisearch -------------------------------
+vi /etc/yum.repos.d/elasticsearch.repo
+'
+[elasticsearch]
+name=ElasticSearch repository for 7.X packages
+baseurl=https://artifacts.elastic.co/packages/7.x/yum 
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+autorefresh=1
+type=rpm-md
+'
+
+yum install elasticsearch -y
+
+
+vi /etc/elasticsearch/elasticsearch.yml
+'
+cluster.name: escluster
+node.name: els-1
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+network.host: [_eth1_, _local_]
+http.port: 9200
+discovery.zen.ping.unicast.hosts: ["els-1.home.lab", "els-2.home.lab", "els-3.home.lab"]
+discovery.zen.minimum_master_nodes: 2
+cluster.initial_master_nodes: ["172.16.16.101"]
+indices.breaker.fielddata.limit: 60%
+indices.fielddata.cache.size: 50%
+'
+systemctl enable elasticsearch
+systemctl start elasticsearch
+
+[root@els-1 ~]# curl http://escluster.home.lab:9200/_cluster/health?pretty
+{
+  "cluster_name" : "escluster",
+  "status" : "green",
+  "timed_out" : false,
+  "number_of_nodes" : 3,
+  "number_of_data_nodes" : 3,
+  "active_primary_shards" : 3,
+  "active_shards" : 6,
+  "relocating_shards" : 0,
+  "initializing_shards" : 0,
+  "unassigned_shards" : 0,
+  "delayed_unassigned_shards" : 0,
+  "number_of_pending_tasks" : 0,
+  "number_of_in_flight_fetch" : 0,
+  "task_max_waiting_in_queue_millis" : 0,
+  "active_shards_percent_as_number" : 100.0
+}
+-------------------
+
+
+
