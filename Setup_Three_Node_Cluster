@@ -77,6 +77,19 @@ systemctl start elasticsearch
   "active_shards_percent_as_number" : 100.0
 }
 -------------------
+## Install kibana
+yum install kibana -y
+
+vi /etc/kibana/kibana.conf
+'
+server.port: 5601
+server.host: escluster.home.lab
+'
+systemctl enable kibana
+systemctl start kibana
+http://172.16.16.101:5601/
+
+================================
 
 
 
