@@ -1,0 +1,98 @@
+How to setup an Elasticsearch 8.x Cluster ? {https://blog.devgenius.io/how-to-setup-an-elasticsearch-8-x-cluster-end-to-end-practice-b26cc9fe5799}
+
+1- ELasticsearch from version 8.X , auto configuration just change clustr name & node name
+
+For each node, open the Elasticsearch configuration file under the elasticsearch-8.3.0-Node*/config folder and open the elasticsearch.yml
+
+## Just change cluster name & node name
+
+#give your cluster a name.
+cluster.name: My_Cluster_Tutorial
+
+#give your nodes a name (change node number from node to node).
+node.name: "es-node-1"
+
+#During the installation, Elasticsearch is auto-configured as a single node cluster.
+
+# If RAM is large not change
+#now before launching the first node , we’ll change the xms and xmx parameters on jvm.options file to 512mb instead of 4gb
+
+$./elasticsearch.bat 
+
+copy these lines and save them somewhere safe.
+
+now go to your elasticsearch.yml file and you’ll notice multiple changes
+
+#Generate Elasticsearch Cluster Enrollment Token
+
+Node1$ ./elasticsearch-create-enrollment-token -s node
+
+'copy code and save'
+
+---------------------------------------
+now open node 2 elasticsearch.yml file and edit the cluster and node names :
+
+#give your cluster a name.
+cluster.name: My_Cluster_Tutorial
+
+#give your nodes a name (change node number from node to node).
+node.name: “es-node-2”
+
+Save and exit.
+
+$./elasticsearch --enrollment-token “generated token above”
+
+rebeat step on node3
+
+---------------------------------
+#and we are going to change this by editing the elasticsearch.yml file on every node
+
+
+cluster.initial_master_nodes: ["es-node-1","es-node-2","es-node-3"] # on All nodes
+
+discovery.seed_hosts: ["10.107.237.15:9300", "10.107.237.16:9300", "10.107.237.17:9300"] # on all nodes
+
+
+## before restarting our node01 , we need to repurpose the node role
+elasticsearch-node repurpose   # running on all nodes
+
+
+#now restart your node01
+
+#elasticsearch-node repurpose can be used to delete unwanted data from a node if it used to be a data node or a master-eligible node but has been repurposed not to have one or other of these roles.
+
+you need to repeat the last steps on node 2 and node 3 like we did with node 1 and restart them one at a time.
+
+
+## Check cluster
+ https://10.107.237.15:9201/_cat/nodes?v 
+
+ https://10.107.237.15:9201/_cat/health?v 
+
+------------
+
+# After all nodes are up  running
+
+Next, comment the initial master configuration set during auto-configuration , and replace it with
+
+cluster.initial_master_nodes: [“es-node-1”,”es-node-2",”es-node-3"]
+
+on all the nodes
+
+ ======================================================================
+ ### Kibana
+bin/elasticsearch-reset-password -i -u kibana_system # will using in kiban username & Password 
+
+ install kibana 
+ vi kibana.yml 
+---
+server.posrt: 5601
+server.host: "10.107.237.15"
+server.name: "es-kibana"
+elasticsearch.hosts: ["https://10.107.237.15:9201"]
+
+elasticsearch.username: "kibana_system"
+elasticsearch.password: "P@ssw0rd"
+
+elasticsearch.ssl.verificationMode: none
+----
